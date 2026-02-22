@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LYRA – User</title>
+<style>
+  :root{
+    --bg:#0f1116; --panel:#151a22; --panel2:#121722;
+    --border:#263043; --text:#e7ecf3; --muted:#a9b4c7;
+    --btn:#22304a; --btn2:#1b2538; --ok:#2bd576; --bad:#ff5b5b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+  .topbar{padding:14px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#121521,#0f1116)}
+  .topbar h1{margin:0;font-size:18px;letter-spacing:.3px}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
+  .grid{display:grid;grid-template-columns: 1.8fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  .card h2{margin:0 0 10px 0;font-size:15px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+  textarea{width:100%;min-height:90px;resize:vertical;border-radius:12px;border:1px solid var(--border);padding:10px;background:var(--panel2);color:var(--text)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  button{border:1px solid var(--border);background:var(--btn);color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer}
+  button:hover{background:var(--btn2)}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:13px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .dot.ok{background:var(--ok)}
+  .dot.bad{background:var(--bad)}
+  pre{white-space:pre-wrap;word-break:break-word;margin:0}
+  .answerBox{max-height:420px;overflow:auto;border-radius:12px;border:1px solid var(--border);padding:10px;background:var(--panel2)}
+  ul{margin:0;padding-left:18px}
+  li{margin:6px 0;color:var(--muted)}
+  .small{font-size:12px;color:var(--muted);margin-top:8px}
+  input[type="file"]{color:var(--muted)}
+  .twoBtns{display:flex;gap:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>LYRA – Chat utilizator</h1>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="card">
+        <h2>Întrebare</h2>
+        <textarea id="q" placeholder="Scrie întrebarea..."></textarea>
+
+        <div class="row">
+          <div class="twoBtns">
+            <button onclick="send()">Trimite</button>
+            <button onclick="toggleWeb()">WEB: <span id="w">OFF</span></button>
+            <select id="langSel" onchange="setLang(this.value)" style="border:1px solid var(--border);background:var(--btn);color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer">
+              <option value="auto" selected>LANG: AUTO</option>
+              <option value="ro-RO">RO</option>
+              <option value="en-US">EN</option>
+              <option value="de-DE">DE</option>
+            </select>
+            <button id="micBtn" onclick="mic()">🎙️ Dictare</button>
+            <button id="ttsBtn" onclick="speakToggle()">🔊 Citește</button>
+            <button onclick="copyLastAnswer()">📋 Copy</button>
+            <button onclick="clearChat()" title="Șterge conversația din pagină și din memorie">🧹 Clear</button>
+          </div>
+          <span class="pill" title="Status server">
+            <span id="dot" class="dot bad"></span>
+            <span id="statusText">Verific...</span>
+          </span>
+        </div>
+
+        <div class="small">
+          Notă: WEB ON/OFF activează căutarea pe internet (DuckDuckGo) pentru completare când DOCS nu sunt suficiente.
+        </div>
+
+        <div style="height:14px"></div>
+
+        <h2>Răspuns</h2>
+        <div class="answerBox"><pre id="out">—</pre></div>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <h2>Bibliotecă publică</h2>
+          <ul id="lib"><li>Se încarcă…</li></ul>
+          <div class="row" style="margin-top:10px">
+            <button id="dlBtn" disabled onclick="downloadSelected()">Download</button>
+            <span class="small" id="libInfo"></span>
+          </div>
+          <div class="small" style="margin-top:10px">Selectează un fișier din listă pentru a-l citi aici.</div>
+          <div class="answerBox" style="margin-top:10px"><pre id="libView">—</pre></div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <h2>Upload fișier (trimis la admin)</h2>
+          <input type="file" id="f" />
+          <div class="row">
+            <button onclick="up()">Trimite</button>
+            <span class="small">Fișierele ajung în PENDING_UPLOADS/ (le vede adminul).</span>
+          </div>
+          <div class="small" id="upInfo"></div>
+        </div>
+
+        <div class="card">
+          <h2>Colaborare</h2>
+          <div class="small">Trimite un mesaj către admin (în inbox intern).</div>
+          <div class="row" style="margin-top:10px; gap:10px; align-items:flex-start">
+            <input id="c_name" placeholder="Nume (opțional)" style="flex:1; min-width:160px"/>
+            <input id="c_email" placeholder="Email (opțional)" style="flex:1; min-width:180px"/>
+          </div>
+          <textarea id="c_msg" placeholder="Mesajul tău..." style="width:100%; height:120px; margin-top:10px"></textarea>
+          <div class="row" style="margin-top:10px">
+            <input type="file" id="c_file" />
+            <button onclick="sendContact()">Trimite mesaj</button>
+          </div>
+          <div class="small" id="cInfo"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+
+<script>
+/* =========================
+   Lyra User UI enhancements
+   - Persistent chat history (manual Clear)
+   - LocalStorage persistence
+   - Stable dictation (no overlaps)
+   - TTS toggle start/stop
+   - Language selector (RO/EN/DE/AUTO) for mic + TTS
+   - Enter=Send / Shift+Enter=New line
+   - Smart auto-scroll
+   - Copy last assistant answer
+   ========================= */
+
+let web = false;
+
+// Language selection
+let lang = "auto"; // "auto" | BCP-47 (ro-RO, en-US, de-DE)
+function setLang(v){
+  lang = (v || "auto").trim();
+  const sel = document.getElementById("langSel");
+  if(sel){
+    // Update label for AUTO option
+    sel.options[0].textContent = "LANG: " + (lang==="auto" ? "AUTO" : "AUTO");
+  }
+}
+
+// --- Chat persistence
+const LS_KEY = "lyra_user_chat_v1";
+let chat = []; // [{role:"user"|"assistant"|"system", content:string, ts:number}]
+
+function loadChat(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const j = JSON.parse(raw);
+    if(Array.isArray(j)) chat = j.filter(x=>x && typeof x.content==="string" && typeof x.role==="string");
+  }catch(e){}
+}
+
+function saveChat(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(chat.slice(-500))); }catch(e){}
+}
+
+function clearChat(){
+  chat = [];
+  saveChat();
+  renderChat(true);
+}
+
+function appendChat(role, content){
+  chat.push({role, content: String(content||""), ts: Date.now()});
+  saveChat();
+  renderChat();
+}
+
+function formatMsg(m){
+  const role = (m.role||"").toUpperCase();
+  const sep = role==="USER" ? "👤" : (role==="ASSISTANT" ? "🤖" : "•");
+  return `${sep} ${role}\n${m.content}\n`;
+}
+
+function isNearBottom(el, threshold=40){
+  return (el.scrollTop + el.clientHeight) >= (el.scrollHeight - threshold);
+}
+
+function renderChat(forceBottom=false){
+  const out = document.getElementById("out");
+  const box = out?.closest(".answerBox");
+  if(!out || !box) return;
+
+  const wasNearBottom = forceBottom ? true : isNearBottom(box);
+
+  if(chat.length===0){
+    out.textContent = "—";
+  }else{
+    const parts = [];
+    for(const m of chat){
+      parts.push(formatMsg(m));
+      parts.push("────────────────────────\n");
+    }
+    out.textContent = parts.join("").trimEnd();
+  }
+
+  // Smart autoscroll
+  if(forceBottom || wasNearBottom){
+    box.scrollTop = box.scrollHeight;
+  }
+}
+
+// --- Web toggle
+function toggleWeb(){
+  web = !web;
+  document.getElementById("w").innerText = web ? "ON" : "OFF";
+}
+
+// --- Sending
+let sending = false;
+async function send(){
+  if(sending) return;
+
+  const qEl = document.getElementById("q");
+  const q = (qEl.value||"").trim();
+  if(!q){ alert("Scrie o întrebare."); return; }
+
+  stopMic(true);
+
+  appendChat("user", q);
+
+  qEl.value = "";
+  sending = true;
+
+  // optional: show "processing" system line
+  appendChat("system", "Se procesează…");
+
+  let j = {};
+  try{
+    const r = await fetch("/api/chat",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({query:q, web:web})
+    });
+
+    // remove the last system "processing" line
+    // (keep history clean)
+    if(chat.length && chat[chat.length-1].role==="system" && chat[chat.length-1].content==="Se procesează…"){
+      chat.pop();
+      saveChat();
+    }
+
+    if(r.status===401){
+      window.location.href = "/";
+      return;
+    }
+
+    j = await r.json().catch(()=>({}));
+    const ans = j.answer || j.error || JSON.stringify(j,null,2);
+    appendChat("assistant", ans);
+  }catch(e){
+    if(chat.length && chat[chat.length-1].role==="system" && chat[chat.length-1].content==="Se procesează…"){
+      chat.pop();
+      saveChat();
+    }
+    appendChat("assistant", "Eroare de rețea / server. Încearcă din nou.");
+  }finally{
+    sending = false;
+  }
+}
+
+// Copy last assistant answer
+function copyLastAnswer(){
+  const last = [...chat].reverse().find(m=>m.role==="assistant" && (m.content||"").trim());
+  if(!last){ return; }
+  const txt = last.content;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).catch(()=>{});
+  }else{
+    const ta = document.createElement("textarea");
+    ta.value = txt;
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    ta.remove();
+  }
+}
+
+// --- Dictation (SpeechRecognition)
+let rec = null;
+let micActive = false;
+let micBaseText = "";
+let micInterim = "";
+let micDebounceTimer = null;
+
+function getSpeechLangFor(mode){
+  // mode: "mic" | "tts"
+  if(lang !== "auto") return lang;
+
+  // AUTO heuristic: if user input contains Romanian diacritics, use ro-RO
+  const qVal = (document.getElementById("q")?.value || "");
+  const hasRo = /[ăâîșțĂÂÎȘȚ]/.test(qVal);
+  if(hasRo) return "ro-RO";
+
+  // Default AUTO = ro-RO (since you speak Romanian)
+  return "ro-RO";
+}
+
+function updateMicButton(){
+  const b = document.getElementById("micBtn");
+  if(!b) return;
+  b.textContent = micActive ? "🛑 Dictare" : "🎙️ Dictare";
+}
+
+function stopMic(silent=false){
+  if(micDebounceTimer){ clearTimeout(micDebounceTimer); micDebounceTimer = null; }
+  micInterim = "";
+  if(rec){
+    try{ rec.onresult = null; rec.onerror=null; rec.onend=null; rec.stop(); }catch(e){}
+    rec = null;
+  }
+  if(micActive){
+    micActive = false;
+    updateMicButton();
+  }
+  if(!silent){
+    // nothing
+  }
+}
+
+function mic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ alert("Browserul nu suportă dictare pe acest PC."); return; }
+
+  // Toggle
+  if(micActive){
+    stopMic(true);
+    return;
+  }
+
+  // Debounce rapid clicks
+  if(micDebounceTimer) return;
+
+  const qEl = document.getElementById("q");
+  micBaseText = (qEl.value || "").trim();
+  micInterim = "";
+
+  rec = new SR();
+  rec.lang = getSpeechLangFor("mic");
+  rec.interimResults = true;
+  rec.continuous = true;
+
+  micActive = true;
+  updateMicButton();
+
+  rec.onresult = (e)=>{
+    let interim = "";
+    let finalText = "";
+
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const res = e.results[i];
+      const t = (res[0]?.transcript || "");
+      if(res.isFinal) finalText += t;
+      else interim += t;
+    }
+
+    finalText = (finalText || "").trim();
+    interim = (interim || "").trim();
+
+    // Apply small "latency" so we don't write too aggressively
+    // We update input only every ~120ms.
+    micInterim = interim;
+
+    micDebounceTimer && clearTimeout(micDebounceTimer);
+    micDebounceTimer = setTimeout(()=>{
+      const base = micBaseText ? (micBaseText + " ") : "";
+      const combined = (base + (finalText ? finalText + " " : "") + micInterim).trim();
+      qEl.value = combined;
+      micDebounceTimer = null;
+    }, 120);
+
+    if(finalText){
+      // commit finals to base
+      const base = micBaseText ? (micBaseText + " ") : "";
+      micBaseText = (base + finalText).trim();
+      micInterim = "";
+      qEl.value = micBaseText;
+    }
+  };
+
+  rec.onerror = ()=>{ /* keep quiet */ };
+
+  rec.onend = ()=>{
+    rec = null;
+    micActive = false;
+    updateMicButton();
+  };
+
+  try{
+    rec.start();
+  }catch(e){
+    rec = null;
+    micActive = false;
+    updateMicButton();
+  }
+}
+
+// --- TTS (SpeechSynthesis) toggle
+let ttsSpeaking = false;
+function updateTTSButton(){
+  const b = document.getElementById("ttsBtn");
+  if(!b) return;
+  b.textContent = ttsSpeaking ? "⏹ Stop" : "🔊 Citește";
+}
+
+function getLastAssistantText(){
+  const last = [...chat].reverse().find(m=>m.role==="assistant" && (m.content||"").trim());
+  return last ? last.content.trim() : "";
+}
+
+function speakToggle(){
+  if(!("speechSynthesis" in window)){
+    alert("Browserul nu suportă audio (TTS).");
+    return;
+  }
+
+  if(ttsSpeaking){
+    window.speechSynthesis.cancel();
+    ttsSpeaking = false;
+    updateTTSButton();
+    return;
+  }
+
+  const txt = getLastAssistantText();
+  if(!txt){ return; }
+
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang = getSpeechLangFor("tts");
+
+  u.onend = ()=>{
+    ttsSpeaking = false;
+    updateTTSButton();
+  };
+  u.onerror = ()=>{
+    ttsSpeaking = false;
+    updateTTSButton();
+  };
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+
+  ttsSpeaking = true;
+  updateTTSButton();
+}
+
+// --- Library (unchanged)
+let selectedFile = "";
+async function lib(){
+  const ul = document.getElementById("lib");
+  ul.innerHTML = "<li>Se încarcă…</li>";
+  const r = await fetch("/api/library");
+  const j = await r.json().catch(()=>({files:[]}));
+
+  ul.innerHTML = "";
+  (j.files||[]).forEach(f=>{
+    const li = document.createElement("li");
+    li.textContent = f;
+    li.style.cursor = "pointer";
+    li.onclick = async ()=>{
+      selectedFile = f;
+      document.getElementById("dlBtn").disabled = false;
+
+      [...ul.querySelectorAll("li")].forEach(x=>x.style.color="var(--muted)");
+      li.style.color = "var(--text)";
+
+      document.getElementById("libView").innerText = "Se încarcă…";
+      const vr = await fetch("/api/library/view?name=" + encodeURIComponent(f));
+      if(vr.ok){
+        const txt = await vr.text();
+        document.getElementById("libView").innerText = txt || "—";
+      }else{
+        document.getElementById("libView").innerText =
+          "Previzualizare indisponibilă pentru acest tip de fișier. Folosește Download.";
+      }
+    };
+    ul.appendChild(li);
+  });
+
+  document.getElementById("libInfo").innerText = `Fișiere: ${(j.files||[]).length}`;
+}
+
+function downloadSelected(){
+  if(!selectedFile){ return; }
+  window.open("/api/library/download?name=" + encodeURIComponent(selectedFile), "_blank");
+}
+
+// Contact/upload (unchanged)
+async function sendContact(){
+  const info = document.getElementById("cInfo");
+  info.innerText = "Trimit…";
+
+  const fd = new FormData();
+  fd.append("name", document.getElementById("c_name").value || "");
+  fd.append("email", document.getElementById("c_email").value || "");
+  fd.append("message", document.getElementById("c_msg").value || "");
+  const f = document.getElementById("c_file").files[0];
+  if(f) fd.append("file", f);
+
+  const r = await fetch("/api/contact/message", {method:"POST", body: fd});
+  if(r.status===401){ window.location.href="/"; return; }
+  const j = await r.json().catch(()=>({}));
+  info.innerText = r.ok ? "Mesaj trimis ✅" : ("Eroare: " + (j.error||r.status));
+  if(r.ok){
+    document.getElementById("c_msg").value = "";
+    document.getElementById("c_file").value = "";
+  }
+}
+
+async function up(){
+  const file = document.getElementById("f").files[0];
+  if(!file){ alert("Alege un fișier."); return; }
+  const fd = new FormData();
+  fd.append("file", file);
+
+  const r = await fetch("/api/user_upload",{method:"POST", body: fd});
+  if(r.status===401){ window.location.href="/"; return; }
+  const j = await r.json().catch(()=>({}));
+  document.getElementById("upInfo").innerText = r.ok ? ("Trimis la admin ✅ ("+(j.saved_as||"")+")") : ("Eroare: "+(j.error||r.status));
+}
+
+// Status (unchanged behavior; now will run even if external JS path is wrong)
+async function status(){
+  try{
+    const r = await fetch("/api/status");
+    if(!r.ok) throw new Error("status not ok");
+    const j = await r.json();
+    document.getElementById("dot").className = "dot ok";
+    document.getElementById("statusText").innerText = `Online • DOCS:${j.docs} • Pending:${j.pending}`;
+  }catch(e){
+    document.getElementById("dot").className = "dot bad";
+    document.getElementById("statusText").innerText = "Offline";
+  }
+}
+
+// Enter=send (Shift+Enter newline)
+document.getElementById("q")?.addEventListener("keydown", (e)=>{
+  if(e.key==="Enter" && !e.shiftKey){
+    e.preventDefault();
+    send();
+  }
+});
+
+// Init
+loadChat();
+renderChat(true);
+lib();
+status();
+setInterval(status, 3000);
+</script>
+
+</body>
+</html>

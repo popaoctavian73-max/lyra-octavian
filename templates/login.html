@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>LYRA Octavian - Login</title>
+<link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>LYRA</h1>
+    <p class="muted">Octavian prototype</p>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login">
+      <input type="hidden" name="next" value="{{ next|default('') }}"/>
+
+      <label>Username</label>
+      <input name="username" required/>
+
+      <label>Password</label>
+      <input name="password" type="password" required/>
+
+      <button type="submit">Login</button>
+    </form>
+
+    <p class="muted small">Default: admin / admin</p>
+  </div>
+</div>
+</body>
+</html>

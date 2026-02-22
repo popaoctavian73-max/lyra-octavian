@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ro"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>LYRA Octavian</title>
+<link rel="stylesheet" href="/static/style.css"/>
+</head><body>
+<header class="top">
+  <div class="brand">LYRA</div>
+  <div class="right">
+    <span class="muted">User: <b>{{ user.username }}</b>{% if user.is_admin %} (admin){% endif %}</span>
+    <a class="link" href="/user">User</a>
+    <a class="link" href="/logout">Logout</a>
+  </div>
+</header>
+
+<main class="grid">
+<section class="chat">
+  <div id="chatlog" class="chatlog">
+    {% for m in chats %}
+      <div class="msg {{ m.role }}"><div class="role">{{ m.role }}</div><div class="content">{{ m.content }}</div></div>
+    {% endfor %}
+  </div>
+
+  <div class="composer">
+    <input id="q" placeholder="Scrie aici..." />
+
+    <!-- Web toggle (used by /static/app.js) -->
+    <label class="muted small" style="display:flex; align-items:center; gap:8px; user-select:none;">
+      <input type="checkbox" id="web" checked />
+      Web ON (DuckDuckGo)
+    </label>
+
+    <button id="send">Trimite</button>
+  </div>
+
+  <div class="muted small">LLM e stub. Scop: UI + auth + upload + ingest + RAG plumbing.</div>
+</section>
+
+<aside class="side">
+  <h2>Admin / Tools</h2>
+  {% if user.is_admin %}
+  <div class="panel">
+    <h3>Upload în DOCS/</h3>
+    <input type="file" id="file" multiple />
+    <button id="upload">Upload</button>
+    <div id="uploadStatus" class="muted small"></div>
+  </div>
+  <div class="panel">
+    <h3>Ingest</h3>
+    <button id="ingest">Rulează ingest</button>
+    <div id="ingestStatus" class="muted small"></div>
+  </div>
+  <div class="panel">
+    <h3>Inbox (mesaje către admin)</h3>
+    <button id="inboxRefresh">Refresh</button>
+    <div id="inboxStatus" class="muted small"></div>
+    <div id="inboxList" class="inbox"></div>
+    <div id="inboxView" class="muted small" style="white-space:pre-wrap; margin-top:10px"></div>
+  </div>
+  {% else %}
+  <div class="panel"><div class="muted">Doar admin poate upload/ingest.</div></div>
+  {% endif %}
+</aside>
+</main>
+
+<script src="/static/app.js"></script>
+</body></html>

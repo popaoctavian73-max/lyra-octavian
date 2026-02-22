@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Algora Humani — Public Portal</title>
+
+  <!-- Keep project styling consistent -->
+  <link rel="stylesheet" href="/static/style.css"/>
+
+  <style>
+    /* Only layout polish; keep logic identical. */
+    :root{
+      --maxw: 1180px;
+      --border: #232a3b;
+      --bg: rgba(21, 25, 37, 0.92);
+      --bg2: #111522;
+      --ink: #e9eef5;
+      --muted: #aab4c6;
+      --shadow: 0 10px 40px rgba(0,0,0,0.25);
+      --radius: 18px;
+    }
+
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 22px; }
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Header / brand */
+    .heroHeader{
+      padding: 18px 18px 16px 18px;
+    }
+    .brandRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+    }
+    .brandLock{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      margin: 0;
+    }
+    .brandLock .logo{
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      line-height: 1.05;
+      margin: 0;
+    }
+    .brandLock .tagline{
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+      margin: 0;
+    }
+
+    .topLinks{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      margin-top: 6px;
+    }
+    .topLinks a{
+      color: var(--ink);
+      text-decoration:none;
+      border: 1px solid #2a3246;
+      background: #1e2434;
+      padding: 8px 11px;
+      border-radius: 14px;
+    }
+    .topLinks a:hover{ filter: brightness(1.06); }
+
+    /* Overview row (two clean columns, no overlay) */
+    .overviewGrid{
+      display:grid;
+      grid-template-columns: 1.35fr 0.65fr;
+      gap: 14px;
+      margin-top: 14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .overviewGrid{ grid-template-columns: 1fr; }
+      .topLinks{ justify-content:flex-start; }
+    }
+
+    .title{
+      margin: 0 0 8px 0;
+      font-size: 16px;
+    }
+    .p{
+      margin: 10px 0 0 0;
+      color:#cfd6e3;
+      line-height: 1.58;
+      font-size: 14px;
+    }
+    .note{
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(35,42,59,0.9);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    /* Action panel */
+    .actions{
+      background: rgba(17, 21, 34, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .actions .btnRow{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border: 1px solid #2a3246;
+      background: #1e2434;
+      color: var(--ink);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      text-decoration:none;
+      user-select:none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .btn:hover{ filter: brightness(1.06); }
+    .btn.primary{ background:#24304a; border-color:#304062; }
+
+    /* Main content: Chat + Docs side-by-side, no tabs */
+    .mainGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .mainGrid{ grid-template-columns: 1fr; }
+    }
+
+    /* Chat */
+    .subTitle { margin: 0 0 6px 0; font-size: 16px; }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+    .chatBox {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      background: #0f1115;
+      max-height: 55vh;
+      overflow:auto;
+      margin-top: 12px;
+    }
+    .msg { margin: 10px 0; display:flex; gap:10px; }
+    .role {
+      min-width: 64px;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding-top: 2px;
+    }
+    .bubble {
+      flex:1;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: var(--bg2);
+      white-space: pre-wrap;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+
+    .controls { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+    .input {
+      flex: 1;
+      min-width: 240px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: #0f1115;
+      color: var(--ink);
+      outline: none;
+      box-sizing: border-box;
+    }
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: #0f1115;
+      color: #cfd6e3;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    .pill input { transform: translateY(1px); }
+
+    /* Docs */
+    .docsTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+    .docsList{
+      margin-top: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .docItem{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: #111522;
+    }
+    .docName{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size: 13px;
+      color: var(--ink);
+      word-break: break-word;
+    }
+    pre.viewer{
+      margin-top: 10px;
+      white-space: pre-wrap;
+      background:#0f1115;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      max-height: 55vh;
+      overflow:auto;
+      color:#cfd6e3;
+    }
+
+    .footerNote{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      border-top: 1px solid rgba(35,42,59,0.7);
+      padding-top: 12px;
+    }
+
+    /* ---------- Alignment polish (CSS-only; logic untouched) ---------- */
+    /* Make the three major sections feel aligned and consistent */
+    .overviewGrid{ align-items: stretch; }
+    .overviewGrid > .card{ height: 100%; }
+
+    .actions{
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .actions .btnRow{ margin-top: 10px; }
+    .actions .footerNote{ margin-top: auto; }
+
+    /* Keep Chat + Docs cards visually aligned on desktop */
+    .mainGrid{ align-items: stretch; }
+    #chat.card, #docs.card{
+      display: flex;
+      flex-direction: column;
+      min-height: 66vh;
+    }
+    @media (max-width: 980px){
+      #chat.card, #docs.card{ min-height: auto; }
+    }
+
+    /* Chat: let the message area grow so controls sit consistently */
+    #chat .chatBox{
+      flex: 1;
+      min-height: 360px;
+    }
+    #chat #chatStatus{ margin-top: 10px; }
+
+    /* Docs: keep list readable without pushing viewer too far down */
+    #docs .docsList{
+      max-height: 26vh;
+      overflow: auto;
+      padding-right: 4px; /* avoids scrollbar overlap */
+    }
+    #docs pre.viewer{
+      flex: 1;
+      min-height: 360px;
+    }
+
+    /* Small spacing/typography polish */
+    .card{ padding: 20px; }
+    .heroHeader{ padding: 20px 20px 18px 20px; }
+    .subTitle{ letter-spacing: 0.1px; }
+
+  </style>
+</head>
+
+<body>
+  <!-- Keep existing top header style if your style.css defines it -->
+  <header class="top">
+    <div class="brand">
+      <a href="/public" style="color:inherit; text-decoration:none;">Algora Humani</a>
+    </div>
+    <div class="right" style="display:flex; gap:10px; align-items:center;">
+      <span class="muted" style="opacity:.9;">Public Portal</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- HERO -->
+    <section class="card heroHeader" id="home">
+      <div class="brandRow">
+        <div class="brandLock">
+          <h1 class="logo">Algora Humani</h1>
+          <p class="tagline">A Constitutional Project for Future Societies</p>
+        </div>
+
+        <nav class="topLinks" aria-label="Quick navigation">
+          <a href="#chat">Public Chat</a>
+          <a href="#docs">Public Docs</a>
+        </nav>
+      </div>
+
+      <div class="overviewGrid">
+        <!-- Overview (uses your provided text) -->
+        <div class="card" style="background: rgba(17,21,34,0.85); border-radius:16px;">
+          <h2 class="title">Project Overview</h2>
+
+          <p class="p">
+            Algora Humani is an independent research project focused on institutional design.
+Its purpose is to explore mechanisms that can reduce concentration of power,
+increase transparency, and strengthen accountability in complex societies.
+          </p>
+          <p class="p">
+            The project does not claim political authority, does not function as a party,
+and does not seek immediate implementation. It operates as an open constitutional
+laboratory where ideas, models, and structural safeguards are documented,
+analyzed, and refined over time.
+          </p>
+          <p class="p">
+            Artificial intelligence systems such as LYRA are used as analytical tools.
+They assist in structuring reasoning and comparing institutional mechanisms,
+but they do not replace human responsibility or decision-making.
+          </p>
+          <p class="p">
+            Current Phase: Foundational research and constitutional drafting.
+No institutional authority is claimed.
+Participation and discussion are voluntary.
+          </p>
+          <p class="p">
+            Algora Humani does not deny present realities, but explores the possibility of a different social organization —
+one in which ethics, fairness, common sense, and merit are not exceptions, but structural rules.
+          </p>
+
+          <div class="note">
+            Public access is available only while the server is running. Documents listed under “Public Docs” are read-only and served from <code>PUBLIC_DOCS/</code>.
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <aside class="actions" aria-label="Quick actions">
+          <div class="muted" style="font-weight:700; letter-spacing:0.2px;">Quick actions</div>
+          <div class="btnRow">
+            <a class="btn primary" href="#chat">Open Public Chat</a>
+            <a class="btn" href="#docs">Browse Public Docs</a>
+          </div>
+
+          <div class="footerNote" style="border-top:none; padding-top:12px; margin-top:12px;">
+            <div><strong>Note:</strong> This is a research project interface.</div>
+            <div>Abusive traffic can be rate-limited or blocked by the operator.</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- MAIN: Chat + Docs -->
+    <section class="mainGrid">
+      <!-- CHAT -->
+      <section class="card" id="chat">
+        <h2 class="subTitle">Public Chat (LYRA)</h2>
+        <div class="muted">
+          Ask normally. LYRA prioritizes DOCS context. Web is optional.
+        </div>
+
+        <div id="chatBox" class="chatBox" aria-live="polite">
+          <div class="msg">
+            <div class="role">System</div>
+            <div class="bubble">Welcome. Ask about Algora Humani, LYRA, or consult the public DOCS.</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <input id="q" class="input" placeholder="Type your question…" autocomplete="off"/>
+          <button id="send" class="btn primary" type="button" style="min-width:120px;">Send</button>
+
+          
+          <select id="lang" class="btn" style="min-width:140px;">
+            <option value="auto" selected>LANG: AUTO</option>
+            <option value="ro-RO">LANG: RO</option>
+            <option value="en-US">LANG: EN</option>
+            <option value="de-DE">LANG: DE</option>
+          </select>
+
+          <button id="mic" class="btn" type="button" style="min-width:120px;">🎙️ Dictate</button>
+          <button id="speak" class="btn" type="button" style="min-width:120px;">🔊 Speak</button>
+          <button id="copy" class="btn" type="button" style="min-width:120px;">📋 Copy</button>
+<span class="pill">
+            <input id="web" type="checkbox"/>
+            <label for="web">Enable web (optional)</label>
+          </span>
+
+          <button id="clear" class="btn" type="button" style="min-width:120px;">Clear</button>
+        </div>
+
+        <div id="chatStatus" class="muted" style="margin-top:10px;"></div>
+      </section>
+
+      <!-- DOCS -->
+      <section class="card" id="docs">
+        <div class="docsTop">
+          <div>
+            <h2 class="subTitle" style="margin-bottom:4px;">Public Docs</h2>
+            <div class="muted">Read-only documents made publicly available by the project owner.</div>
+          </div>
+          <button id="refreshDocs" class="btn" type="button" style="min-width:120px;">Refresh</button>
+        </div>
+
+        <div id="docsEmpty" class="muted" style="margin-top:12px; display:none;">No public documents available.</div>
+        <div id="docsList" class="docsList"></div>
+
+        <h3 class="subTitle" style="margin-top:16px;">Viewer</h3>
+        <div class="muted">Select a document to view it here (text-based files).</div>
+        <pre id="viewer" class="viewer">Select a document to view it here.</pre>
+      </section>
+    </section>
+
+    <section class="wrap" style="padding:0;">
+      <div class="footerNote">
+        <div><strong>Operator controls:</strong> moderation can be enforced via server logs, rate-limits, and blocklists.</div>
+        <div>This public portal intentionally exposes no upload, no admin functions, and no private system internals.</div>
+      </div>
+    </section>
+
+  </main>
+
+<script>
+  // ---------- Chat (logic unchanged; only layout changed) ----------
+  const chatBox = document.getElementById('chatBox');
+  const q = document.getElementById('q');
+  const sendBtn = document.getElementById('send');
+  const clearBtn = document.getElementById('clear');
+  const webChk = document.getElementById('web');
+  const chatStatus = document.getElementById('chatStatus');
+  const langSel = document.getElementById('lang');
+  const micBtn = document.getElementById('mic');
+  const speakBtn = document.getElementById('speak');
+  const copyBtn = document.getElementById('copy');
+
+  // --- Automatic polling config (ONLY change requested) ---
+  const POLL_DELAY_MS = 5000;   // 5 seconds
+  const POLL_MAX_TRIES = 60;    // 60 tries (≈ 5 minutes)
+
+  // Track one in-flight public question for auto-retry.
+  let pendingPoll = null;
+
+  function cancelPendingPoll(){
+    if(pendingPoll && pendingPoll.timer){
+      clearTimeout(pendingPoll.timer);
+    }
+    pendingPoll = null;
+  }
+
+  function setStatus(s){
+    chatStatus.textContent = s || '';
+  }
+
+  function appendMsg(role, text){
+    const row = document.createElement('div');
+    row.className = 'msg';
+
+    const r = document.createElement('div');
+    r.className = 'role';
+        const rl = String(role || '').toLowerCase();
+    const emoji = (rl === 'user') ? '👤 ' : (rl === 'lyra') ? '🤖 ' : (rl === 'system') ? '⚙️ ' : '';
+    r.textContent = emoji + (role || '');
+
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.textContent = text || '';
+
+    row.appendChild(r);
+    row.appendChild(b);
+    chatBox.appendChild(row);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+
+  // ---------- Speech helpers (Dictation + TTS + Copy) ----------
+  let _rec = null;
+  let _isSpeaking = false;
+
+  function _getSelectedLang(){
+    const v = (langSel && langSel.value) ? String(langSel.value) : "auto";
+    if(v === "auto"){
+      // Use browser preference; fallback to Romanian (project default audience).
+      return (navigator.language || "ro-RO");
+    }
+    return v;
+  }
+
+  function _getLastLyraText(){
+    // Find the last message whose role is "LYRA"
+    const rows = Array.from(chatBox.querySelectorAll(".msg"));
+    for(let i=rows.length-1; i>=0; i--){
+      const roleEl = rows[i].querySelector(".role");
+      const bubbleEl = rows[i].querySelector(".bubble");
+      const roleTxt = (roleEl ? roleEl.textContent : "").toLowerCase();
+      if(roleTxt.includes("lyra") && bubbleEl){
+        return (bubbleEl.textContent || "").trim();
+      }
+    }
+    return "";
+  }
+
+  async function _copyLastLyra(){
+    const txt = _getLastLyraText();
+    if(!txt) return;
+    try{
+      await navigator.clipboard.writeText(txt);
+      setStatus("Copied last LYRA answer ✅");
+      setTimeout(()=>setStatus(""), 1200);
+    }catch(e){
+      // Fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setStatus("Copied last LYRA answer ✅");
+      setTimeout(()=>setStatus(""), 1200);
+    }
+  }
+
+  function _toggleSpeak(){
+    const txt = _getLastLyraText();
+    if(!txt) return;
+
+    if(!("speechSynthesis" in window)){
+      setStatus("TTS not supported in this browser.");
+      return;
+    }
+
+    if(_isSpeaking){
+      window.speechSynthesis.cancel();
+      _isSpeaking = false;
+      if(speakBtn) speakBtn.textContent = "🔊 Speak";
+      return;
+    }
+
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = _getSelectedLang();
+    u.onend = () => {
+      _isSpeaking = false;
+      if(speakBtn) speakBtn.textContent = "🔊 Speak";
+    };
+    u.onerror = () => {
+      _isSpeaking = false;
+      if(speakBtn) speakBtn.textContent = "🔊 Speak";
+    };
+
+    window.speechSynthesis.cancel(); // ensure clean start
+    _isSpeaking = true;
+    if(speakBtn) speakBtn.textContent = "⏹ Stop";
+    window.speechSynthesis.speak(u);
+  }
+
+  function _toggleMic(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){
+      setStatus("Dictation not supported in this browser.");
+      return;
+    }
+
+    // Toggle OFF
+    if(_rec){
+      try{ _rec.stop(); }catch(e){}
+      return;
+    }
+
+    _rec = new SR();
+    _rec.lang = _getSelectedLang();
+    _rec.continuous = true;
+    _rec.interimResults = true;
+
+    const base = (q.value || "").trim();
+    let finalText = "";
+
+    const updateInput = (interim) => {
+      const parts = [];
+      if(base) parts.push(base);
+      if(finalText) parts.push(finalText.trim());
+      if(interim) parts.push(interim.trim());
+      q.value = parts.join(" ").replace(/\s+/g, " ").trim();
+    };
+
+    _rec.onresult = (e) => {
+      let interim = "";
+      for(let i=e.resultIndex; i<e.results.length; i++){
+        const txt = e.results[i][0].transcript || "";
+        if(e.results[i].isFinal){
+          finalText += " " + txt;
+        }else{
+          interim += " " + txt;
+        }
+      }
+      updateInput(interim);
+    };
+
+    _rec.onerror = () => {};
+    _rec.onend = () => {
+      _rec = null;
+      if(micBtn) micBtn.textContent = "🎙️ Dictate";
+    };
+
+    try{
+      _rec.start();
+      if(micBtn) micBtn.textContent = "⏹ Stop mic";
+    }catch(e){
+      _rec = null;
+      if(micBtn) micBtn.textContent = "🎙️ Dictate";
+    }
+  }
+
+  // Wire up buttons if present
+  micBtn?.addEventListener("click", _toggleMic);
+  speakBtn?.addEventListener("click", _toggleSpeak);
+  copyBtn?.addEventListener("click", _copyLastLyra);
+
+
+  async function postJSON(url, payload){
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload || {})
+    });
+  }
+
+  function scheduleRetry(){
+    if(!pendingPoll) return;
+    if(pendingPoll.tries >= POLL_MAX_TRIES){
+      setStatus('Timed out waiting for answer. Please try again.');
+      pendingPoll = null;
+      return;
+    }
+    pendingPoll.tries += 1;
+    setStatus(`Waiting for answer… retry ${pendingPoll.tries}/${POLL_MAX_TRIES}`);
+    pendingPoll.timer = setTimeout(() => send(true), POLL_DELAY_MS);
+  }
+
+  
+  // -----------------------------
+  // Public paging state (NEXT)
+  // -----------------------------
+  const NEXT_COMMANDS = new Set(['next','more','continue','urmatorul','următorul','mai departe']);
+  let lastPageState = null; // { query, web, page, total }
+
+  function _normCmd(s){
+    return String(s || '').trim().toLowerCase();
+  }
+
+  function _isNextCmd(s){
+    return NEXT_COMMANDS.has(_normCmd(s));
+  }
+
+  function _parsePagingFooter(answerText){
+    const t = String(answerText || '');
+    const m = t.match(/(?:Page|Pagina)\s+(\d+)\s*\/\s*(\d+)/i);
+    if(!m) return null;
+    const page = parseInt(m[1], 10);
+    const total = parseInt(m[2], 10);
+    if(!Number.isFinite(page) || !Number.isFinite(total) || total <= 1) return null;
+    return { page, total };
+  }
+
+
+  async function send(isAutoRetry=false){
+    // Resolve input and (optionally) convert NEXT into a page request.
+    let inputText = isAutoRetry
+      ? (pendingPoll ? pendingPoll.text : '')
+      : (q.value || '').trim();
+
+    if(!inputText) return;
+
+    // Stop any active mic/TTS to avoid overlaps.
+    if(_rec){ try{ _rec.stop(); }catch(e){} }
+    if(_isSpeaking && 'speechSynthesis' in window){ window.speechSynthesis.cancel(); _isSpeaking=false; if(speakBtn) speakBtn.textContent='🔊 Speak'; }
+
+    // If user typed NEXT and we have a paging context, request next page for the previous question.
+    let isPageRequest = false;
+    let requestedPage = null;
+
+    if(!isAutoRetry){
+      const webNow = !!webChk.checked;
+
+      if(_isNextCmd(inputText) && lastPageState){
+        // NEXT => page + 1 of the previous query
+        isPageRequest = true;
+        requestedPage = (lastPageState.page || 1) + 1;
+
+        // Show what the user typed, but do not treat it as a new semantic query.
+        appendMsg('User', inputText);
+        q.value = '';
+        setStatus('');
+
+        pendingPoll = { text: lastPageState.query, web: lastPageState.web, tries: 0, timer: null, page: requestedPage };
+
+      }else{
+        // Normal new query => reset paging context
+        lastPageState = null;
+
+        q.value = '';
+        setStatus('');
+        appendMsg('User', inputText);
+
+        pendingPoll = { text: inputText, web: webNow, tries: 0, timer: null };
+      }
+    }else{
+      // Auto retry keeps whatever pendingPoll already holds (including .page)
+      inputText = pendingPoll ? pendingPoll.text : '';
+      if(!inputText) return;
+    }
+
+    const web = isAutoRetry
+      ? (pendingPoll ? pendingPoll.web : false)
+      : (pendingPoll ? pendingPoll.web : false);
+
+    try{
+      sendBtn.disabled = true;
+      sendBtn.textContent = isAutoRetry ? 'Retrying…' : 'Sending…';
+
+      const semanticQuery = pendingPoll ? pendingPoll.text : inputText;
+      const payload = { query: semanticQuery, web };
+      if(pendingPoll && typeof pendingPoll.page === 'number'){
+        payload.page = pendingPoll.page;
+      }
+
+      const r = await postJSON('/api/public_chat', payload);
+
+      // If Cloudflare cuts quickly with 524, auto-retry.
+      if(!r.ok){
+        if(r.status === 524){
+          scheduleRetry();
+          return;
+        }
+        appendMsg('LYRA', `Error (${r.status})`);
+        cancelPendingPoll();
+        return;
+      }
+
+      const j = await r.json().catch(() => ({}));
+      const answer = (j && j.answer) ? String(j.answer) :
+        (j && j.error) ? String(j.error) :
+        '';
+
+      // If server indicates async processing, keep polling automatically.
+      const isProcessing = /^Processing\.\.\./i.test(answer || '');
+      appendMsg('LYRA', answer || '(empty response)');
+      if(isProcessing){
+        // Keep pendingPoll and retry the same request (same query/page).
+        scheduleRetry();
+        return;
+      }
+      cancelPendingPoll();
+
+      // Track paging context from footer, if present.
+      const paging = _parsePagingFooter(answer);
+      if(paging && paging.page < paging.total){
+        lastPageState = { query: semanticQuery, web, page: paging.page, total: paging.total };
+      }else{
+        lastPageState = null;
+      }
+    }catch(e){
+      appendMsg('LYRA', 'Network error.');
+    }finally{
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send';
+    }
+  }
+
+
+  sendBtn.addEventListener('click', () => send(false));
+  q.addEventListener('keydown', (ev) => {
+    if(ev.key === 'Enter' && !ev.shiftKey){
+      ev.preventDefault();
+      send(false);
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    cancelPendingPoll();
+    if(_rec){ try{ _rec.stop(); }catch(e){} }
+    if(_isSpeaking && 'speechSynthesis' in window){ window.speechSynthesis.cancel(); _isSpeaking=false; if(speakBtn) speakBtn.textContent='🔊 Speak'; }
+    chatBox.innerHTML = '';
+    appendMsg('System', 'Welcome. Ask about Algora Humani, LYRA, or consult the public DOCS.');
+    setStatus('');
+  });
+
+  // ---------- Public Docs (logic unchanged; only layout changed) ----------
+  const docsListEl = document.getElementById('docsList');
+  const docsEmptyEl = document.getElementById('docsEmpty');
+  const viewer = document.getElementById('viewer');
+  const refreshDocsBtn = document.getElementById('refreshDocs');
+
+  async function loadDocs(){
+    docsListEl.innerHTML = '';
+    docsEmptyEl.style.display = 'none';
+    viewer.textContent = 'Select a document to view it here.';
+
+    let data;
+    try{
+      const r = await fetch('/api/library');
+      data = await r.json();
+    }catch(e){
+      docsEmptyEl.textContent = 'Failed to load library.';
+      docsEmptyEl.style.display = 'block';
+      return;
+    }
+
+    const files = (data && data.files) ? data.files : [];
+    if(!files.length){
+      docsEmptyEl.style.display = 'block';
+      return;
+    }
+
+    for(const name of files){
+      const row = document.createElement('div');
+      row.className = 'docItem';
+
+      const left = document.createElement('div');
+      left.className = 'docName';
+      left.textContent = name;
+
+      const right = document.createElement('div');
+      right.style.display = 'flex';
+      right.style.gap = '8px';
+      right.style.flexWrap = 'wrap';
+
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn';
+      viewBtn.textContent = 'View';
+      viewBtn.type = 'button';
+      viewBtn.addEventListener('click', () => viewDoc(name));
+
+      const dl = document.createElement('a');
+      dl.className = 'btn';
+      dl.textContent = 'Download';
+      dl.href = '/api/library/download?name=' + encodeURIComponent(name);
+
+      right.appendChild(viewBtn);
+      right.appendChild(dl);
+
+      row.appendChild(left);
+      row.appendChild(right);
+
+      docsListEl.appendChild(row);
+    }
+  }
+
+  async function viewDoc(name){
+    viewer.textContent = 'Loading…';
+    try{
+      const r = await fetch('/api/library/view?name=' + encodeURIComponent(name));
+      const t = await r.text();
+      viewer.textContent = t || '';
+    }catch(e){
+      viewer.textContent = 'Failed to load document.';
+    }
+  }
+
+  refreshDocsBtn.addEventListener('click', loadDocs);
+
+  // Load docs once on page load (safe; if folder empty it will show the empty message).
+  loadDocs();
+</script>
+</body>
+</html>
